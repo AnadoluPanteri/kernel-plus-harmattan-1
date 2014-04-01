@@ -128,6 +128,13 @@ extern void warn_slowpath_null(const char *file, const int line);
 
 #endif
 
+#ifndef WARN_RATELIMIT
+#define WARN_RATELIMIT(condition, format...) ({				\
+	int __ret_warn_on = !!(condition);				\
+	unlikely(__ret_warn_on);					\
+})
+#endif
+
 #define WARN_ON_ONCE(condition)	({				\
 	static int __warned;					\
 	int __ret_warn_once = !!(condition);			\

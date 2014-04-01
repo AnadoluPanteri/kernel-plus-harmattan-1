@@ -321,7 +321,7 @@ void sb_mark_dirty(struct super_block *sb)
 	if (likely(supers_dirty))
 		return;
 	supers_dirty = 1;
-	arm_supers_timer();
+	bdi_arm_supers_timer();
 }
 EXPORT_SYMBOL_GPL(sb_mark_dirty);
 
@@ -338,7 +338,7 @@ static int bdi_sync_supers(void *unused)
 	while (!kthread_should_stop()) {
 		set_current_state(TASK_INTERRUPTIBLE);
 		if (supers_dirty)
-			arm_supers_timer();
+			bdi_arm_supers_timer();
 		schedule();
 
 		supers_dirty = 0;
