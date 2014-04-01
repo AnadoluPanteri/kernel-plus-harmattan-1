@@ -42,7 +42,6 @@ static unsigned long supers_dirty __read_mostly;
 
 static int bdi_sync_supers(void *);
 static void sync_supers_timer_fn(unsigned long);
-static void arm_supers_timer(void);
 
 #ifdef CONFIG_DEBUG_FS
 #include <linux/debugfs.h>
@@ -240,6 +239,7 @@ static int __init default_bdi_init(void)
 	BUG_ON(IS_ERR(sync_supers_tsk));
 
 	setup_timer(&sync_supers_timer, sync_supers_timer_fn, 0);
+	bdi_arm_supers_timer();
 
 	err = bdi_init(&default_backing_dev_info);
 	if (!err)
@@ -358,9 +358,12 @@ static int bdi_sync_supers(void *unused)
 	return 0;
 }
 
-static void arm_supers_timer(void)
+void bdi_arm_supers_timer(void)
 {
 	unsigned long next;
+
+	if (!dirty_writeback_interval)
+		return;
 
 	next = msecs_to_jiffies(dirty_writeback_interval * 10) + jiffies;
 	mod_timer(&sync_supers_timer, round_jiffies_up(next));
@@ -369,6 +372,7 @@ static void arm_supers_timer(void)
 static void sync_supers_timer_fn(unsigned long unused)
 {
 	wake_up_process(sync_supers_tsk);
+	bdi_arm_supers_timer();
 }
 
 static void wakeup_timer_fn(unsigned long data)
